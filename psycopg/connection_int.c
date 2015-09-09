@@ -372,41 +372,18 @@ exit:
 RAISES_NEG static int
 conn_read_encoding(connectionObject *self, PGconn *pgconn)
 {
-    char *enc = NULL, *codec = NULL;
-    const char *tmp;
+    const char enc[] = "UTF8";
+    const char codec[] = "utf-8";
     int rv = -1;
 
-    tmp = PQparameterStatus(pgconn, "client_encoding");
-    Dprintf("conn_connect: client encoding: %s", tmp ? tmp : "(none)");
-    if (!tmp) {
-        PyErr_SetString(OperationalError,
-            "server didn't return client encoding");
-        goto exit;
-    }
-
-    if (0 > clear_encoding_name(tmp, &enc)) {
-        goto exit;
-    }
-
-    /* Look for this encoding in Python codecs. */
-    if (0 > conn_encoding_to_codec(enc, &codec)) {
-        goto exit;
-    }
-
-    /* Good, success: store the encoding/codec in the connection. */
-    PyMem_Free(self->encoding);
-    self->encoding = enc;
-    enc = NULL;
-
-    PyMem_Free(self->codec);
-    self->codec = codec;
-    codec = NULL;
+    self->encoding = malloc(sizeof(enc));
+    self->codec = malloc(sizeof(codec));
+    strcpy(self->encoding, enc);
+    strcpy(self->codec, codec);
 
     rv = 0;
 
 exit:
-    PyMem_Free(enc);
-    PyMem_Free(codec);
     return rv;
 }
 
